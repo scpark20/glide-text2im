@@ -206,7 +206,7 @@ class GaussianDiffusion:
             == x_start.shape[0]
         )
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
-
+    
     def p_mean_variance(self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None):
         """
         Apply the model to get p(x_{t-1} | x_t), as well as a prediction of

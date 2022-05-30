@@ -7,6 +7,8 @@ import math
 import numpy as np
 import torch as th
 
+from inspect import isfunction
+import torch.nn.functional as F
 
 def _warmup_beta(beta_start, beta_end, num_diffusion_timesteps, warmup_frac):
     betas = beta_end * np.ones(num_diffusion_timesteps, dtype=np.float64)
@@ -449,6 +451,21 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
+
+    def p_losses(self, model, x_start, t):
+        b, c, h, w = x_start.shape
+        noise = th.randn_like(x_start)
+
+        x = self.q_sample(x_start, t, noise)
+        model_out = model(x, t)
+
+        loss = F.l1_loss(model_out, noise)
+        return loss
+
+    def forward(self, model, img, *args, **kwargs):
+        b, c, h, w, device = *img.shape, img.device
+        t = th.randint(0, self.num_timesteps, (b,), device=device).long()
+        return self.p_losses(model, img, t, *args, **kwargs)
 
     def ddim_sample(
         self,
